@@ -2,6 +2,7 @@ version: 2.1
 orbs:
   aws-ecr: circleci/aws-ecr@8.2.1
   aws-cli: circleci/aws-cli@3.1.4
+
 jobs:
   continuous-integration:
     docker:
@@ -18,9 +19,9 @@ jobs:
           path: .
           platform: linux/amd64
           push-image: true
-          region: '${AWS_REGION}'
-          repo: demo
-          registry-id: AWS_ECR_REGISTRY_ID
+          region: eu-north-1
+          repo: end-to-end-nlp-project
+          registry-id: 261431661667
           repo-scan-on-push: true
           tag: latest
 
@@ -31,26 +32,25 @@ jobs:
       - aws-cli/setup
 
       - run:
-          name: auth to aws ecr
-          command: aws ecr get-login-password --region us-east-1 | docker login --username AWS --password-stdin 136566696263.dkr.ecr.us-east-1.amazonaws.com
+          name: Authenticate to AWS ECR (Stockholm)
+          command: aws ecr get-login-password --region eu-north-1 | docker login --username AWS --password-stdin 261431661667.dkr.ecr.eu-north-1.amazonaws.com
           
+      - run:
+          name: Pull image from private ECR repository
+          command: docker pull 261431661667.dkr.ecr.eu-north-1.amazonaws.com/end-to-end-nlp-project:latest
           
+      - run:
+          name: Run container from pulled image
+          command: docker run -d -p 8080:8080 261431661667.dkr.ecr.eu-north-1.amazonaws.com/end-to-end-nlp-project:latest
 
-      - run:
-          name: pull image from private repository
-          command: docker pull 136566696263.dkr.ecr.us-east-1.amazonaws.com/demo:latest
-          
-      
-      - run:
-          name: run image
-          command: docker run -d -p 8080:8080 136566696263.dkr.ecr.us-east-1.amazonaws.com/demo:latest
 workflows:
   CICD:
     jobs:
       - continuous-integration
       - continuous-delivery:
           requires:
-          - continuous-integration
+            - continuous-integration
+
 
 
       
